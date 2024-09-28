@@ -1,7 +1,6 @@
 #root {
   max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 0;
   text-align: center;
 }
 
@@ -33,10 +32,44 @@
   }
 }
 
-.card {
-  padding: 2em;
+#loadingScreen {
+  z-index: 1;
+  background-color: #242424;
+  font-size: 72px;
+  font-weight: 500;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  opacity: 1;
+  transition: opacity .4s ease;
+}
+#loadingScreen p {
+  text-align: center;
+  vertical-align: middle;
 }
 
-.read-the-docs {
-  color: #888;
+#loadingScreen.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#main {
+}
+
+#searchWrap {
+  position: fixed;
+  width: 100%;
+}
+
+#walletAddressSearch {
+  color: rgba(255, 255, 255, 0.87);
+  width: 500px;
+}
+
+#nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
 }
