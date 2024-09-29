@@ -20,7 +20,13 @@ function App() {
   //web3 data
   const [web3, setWeb3] = useState(null);
   const [accounts, setAccounts] = useState([]);
-  const [accountInfo, setAccountInfo] = useState({});
+  const [accountInfo, setAccountInfo] = useState(null);
+  const [contract, setContract] = useState(null);
+  const [errors, setErrors] = useState({
+    badQuery: false,
+    notFound: false,
+    badResponse: false,
+  })
   
   useEffect(() => {
     setTimeout(()=>{
@@ -258,13 +264,12 @@ function App() {
       ]
       const contractAddress = "0xAAC2EdE5C581f4D163607046f1de06d7bB09374e"
       const contract = new web3Instance.eth.Contract(contractABI, contractAddress);
+      setContract(contract);
 
-      try {
-        const result = await contract.methods.setMManAddress("0xAAC2EdE5C581f4D163607046f1de06d7bB09374e").call();
-        console.log(result);
-      } catch (error) {
-        console.error(error);
-      }
+      accounts.forEach((account) => {
+        console.log(account);
+        contract.methods.addIntoContract(account, ["bitcoin", "ethereum"], [2, 4]).call();
+      })
     }
 
     initWeb3();
@@ -272,8 +277,10 @@ function App() {
 
   const Search = (event) => {
     event.preventDefault();
+    console.log("info:", accountInfo);
     console.log("query: ", query)
     fetchAccountInfo(query)
+    console.log("errors:", errors);
     console.log("success:", accountInfo);
 
   }
@@ -288,15 +295,15 @@ function App() {
     try {
       const balance = await web3.eth.getBalance(query);
       const transactionCount = await web3.eth.getTransactionCount(query);
-
       const info = {
         query,
         balance: web3.utils.fromWei(balance, 'ether'),
         transactionCount,
       }
-
       setAccountInfo(info);
+      setErrors(prev => ({...prev, badQuery: false}))
     } catch (error) {
+      setErrors(prev => ({...prev, badQuery: true}))
       console.error("ERROR FETCHING ACCOUNT INFO:", error);
     }
   }
@@ -304,11 +311,20 @@ function App() {
   return (
     <>
       <div id="loadingScreen" className={loading ? '' : 'hidden'}>
-        <p>GreenWallet</p>
+            <Box component="img" src="logo1000.png" onClick={() => {window.location.href='/asdf'}} sx={{
+              height: '300px',
+              width: '300px',
+            }}>
+            </Box>
       </div>
       <div id="main">
         <Box id="nav">
           <Toolbar>
+            <Box component="img" src="logoonly.svg" onClick={() => {window.location.href='/asdf'}} sx={{
+              height: 75,
+              width: 75,
+            }}>
+            </Box>
             <Typography variant="h6"  sx={{flexGrow: 1, alignItems: "flex-start"}}>
             </Typography>
               <IconButton
@@ -330,10 +346,11 @@ function App() {
             placeholder="Enter Wallet Address"
             onChange={handleSearchChange}
             id="walletAddressSearch"
-            slotProps={{
+            error={errors.badQuery}
+            helperText={errors.badQuery ? "Could not match wallet address" : ""}            slotProps={{
               input: {
                 endAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment id="searchBtn" position="start" sx={{margin:0, height:"100%"}}>
                     <SearchIcon style={{color: "f1f1f1", cursor: "pointer"}} onClick={Search}/>
                   </InputAdornment>
                 ),
@@ -355,8 +372,24 @@ function App() {
                 },
               },
             }}
-            />
-          </Box>
+          />
+        </Box>
+        {(accountInfo !== null && !errors.badQuery) &&
+        <div id="accountInfo">
+          <div id="balDisplay">
+            <h4>Remaining Balance</h4>
+            <p>{accountInfo.balance}</p>
+          </div>
+          <div id="greenDisplay">
+            <h4>Green Score</h4>
+            <p>{accountInfo.balance}</p>
+          </div>
+          <div id="tranDisplay">
+            <h4>Transactions Made</h4>
+            <p>{accountInfo.transactionCount.toString()}</p>
+          </div>
+        </div>
+        }
       </div>
     </>
   )
