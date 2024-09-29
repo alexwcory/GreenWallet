@@ -55,6 +55,19 @@ function App() {
             {
               "indexed": false,
               "internalType": "address",
+              "name": "_walletAddress",
+              "type": "address"
+            }
+          ],
+          "name": "finishedAddContract",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
               "name": "_address",
               "type": "address"
             }
@@ -73,6 +86,19 @@ function App() {
             }
           ],
           "name": "setMRegInGreenWallet",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_address",
+              "type": "address"
+            }
+          ],
+          "name": "setTOneGreenWallet",
           "type": "event"
         },
         {
@@ -96,10 +122,37 @@ function App() {
               "type": "address"
             }
           ],
+          "name": "setTOneAddress",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_address",
+              "type": "address"
+            }
+          ],
           "name": "setMRegAddress",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getTOneURI",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "uri",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "constant": true
         },
         {
           "inputs": [],
@@ -134,7 +187,13 @@ function App() {
             }
           ],
           "name": "addIntoContract",
-          "outputs": [],
+          "outputs": [
+            {
+              "internalType": "int256",
+              "name": "score",
+              "type": "int256"
+            }
+          ],
           "stateMutability": "nonpayable",
           "type": "function"
         },
@@ -172,8 +231,9 @@ function App() {
               "type": "int256"
             }
           ],
-          "stateMutability": "nonpayable",
-          "type": "function"
+          "stateMutability": "view",
+          "type": "function",
+          "constant": true
         },
         {
           "inputs": [
@@ -231,8 +291,9 @@ function App() {
               "type": "string[]"
             }
           ],
-          "stateMutability": "nonpayable",
-          "type": "function"
+          "stateMutability": "view",
+          "type": "function",
+          "constant": true
         },
         {
           "inputs": [
@@ -268,10 +329,31 @@ function App() {
 
       accounts.forEach((account) => {
         console.log(account);
-        contract.methods.addIntoContract(account, ["bitcoin", "ethereum"], [2, 4]).call();
+        if (web3Instance.utils) {
+          console.log("Web3 utils is available:", web3Instance.utils);
+        } else {
+          console.error("Web3 utils is null or undefined.");
+          return;  // Exit early if utils is not available
+        }
+        const isValid = web3Instance.utils.isAddress(account);
+        console.log("Is address valid and checksummed:", isValid);
+        const executeTransaction = async () => {
+          try {
+            await contract.methods.addIntoContract(account, ["bitcoin", "ethereum"], [2, 4]).send({ from: account });
+            console.log("Transaction successful");
+          } catch (error) {
+            console.error("Error executing transaction:", error);
+          }
+        };
+        executeTransaction();
+        const score = contract.methods.getScore(account).call().then((score) => {
+          console.log("Score:", score);
+        }).catch((error) => {
+          console.error("Error fetching score:", error);
+        });
+        console.log(score);
       })
     }
-
     initWeb3();
   }, [])
 

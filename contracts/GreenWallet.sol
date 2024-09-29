@@ -70,7 +70,7 @@ contract GreenWallet {
         MMan.mintSBTLogic(_walletAddress, score);
     }
 
-    function getScore(address _walletAddress) public returns (int walletScore) {
+    function getScore(address _walletAddress) public view returns (int walletScore) {
         require(addressExists(_walletAddress), "This wallet does not exist in this contract");
         return MMan.getScore(_walletAddress);
     }
