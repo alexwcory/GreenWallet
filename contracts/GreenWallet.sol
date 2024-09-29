@@ -7,13 +7,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 interface MManager{
     function calculateScore(address walletAddress, string[] memory chains, int[] memory numTransactions) external returns(int);
     function mintSBTLogic(address _walletAddress, int _score) external;
-    function getScore(address _walletAddress) external returns(int);
+    function getScore(address _walletAddress) external view returns(int);
 }
 interface TierOne{
     function getBaseTokenURI() external view returns (string memory _uri);
 }
 interface MRegister{
-    function getAllMintedSBTs(address _address) external returns (string[] memory _tiersOwned);
+    function getAllMintedSBTs(address _address) external view returns (string[] memory _tiersOwned);
+    function addIntoRegistry(address _address) external;
 }
 contract GreenWallet {
     mapping(address => mapping(string => int)) private transactions;
@@ -25,8 +26,7 @@ contract GreenWallet {
     event setMManRegInGreenWallet(address _address);
     event setMRegInGreenWallet(address _address);
     event setTOneGreenWallet(address _address);
-    event finishedAddContract();
-
+    event finishedAddContract(address _walletAddress);
     constructor(){}
 
     function setMManAddress(address _address) external{
@@ -60,7 +60,7 @@ contract GreenWallet {
         MMan.calculateScore(_walletAddress, chains, numTransactions);
         int score = MMan.getScore(_walletAddress);
         MMan.mintSBTLogic(_walletAddress, score);
-        emit finishedAddContract();
+        emit finishedAddContract(_walletAddress);
         return score;
     }
 

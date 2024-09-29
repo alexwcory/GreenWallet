@@ -13,8 +13,7 @@ contract MintingRegistry{
     ITierRegistry ITier;
     using StringArrayUtils for string[];
     address[] addresses;
-    mapping(address => int[]) private mintedRegistryForWallets;
-    mapping(address => int) private numMinted;
+    mapping(address => string[]) private mintedRegistryForWallets;
 
     constructor(){}
 
@@ -29,8 +28,8 @@ contract MintingRegistry{
         return _addresses;
     }
 
-    function addTier(address _address, int _tier) public {
-        int[] memory userStrings = mintedRegistryForWallets[_address];
+    function addTier(address _address, string memory _tier) public {
+        string[] storage userStrings = mintedRegistryForWallets[_address];
         bool hasValue = false;
         for (uint256 i = 0; i < userStrings.length; i++) {
             if (keccak256(abi.encodePacked(userStrings[i])) == keccak256(abi.encodePacked(_tier))) {
@@ -39,7 +38,6 @@ contract MintingRegistry{
         }
         if (hasValue == false) {
             mintedRegistryForWallets[_address].push(_tier);
-            numMinted[_address]++;
         }
     }
     
@@ -47,23 +45,33 @@ contract MintingRegistry{
         delete mintedRegistryForWallets[_address];
     }
 
-    function hasMintedSBT(address _address, int _tier) public view returns (bool _hasMinted){
-        uint256 length = uint256(numMinted[_address]);
-        bool has = false;
-        for(uint256 i = 0; i < length; i++){
-            if(mintedRegistryForWallets[_address][i] == _tier){
-                has = true;
+    function hasMintedSBT(address _address, string memory _tier) public view returns (bool _hasMinted){
+        string[] storage userStrings = mintedRegistryForWallets[_address];
+        bool hasValue = false;
+        for (uint256 i = 0; i < userStrings.length; i++) {
+            if (keccak256(abi.encodePacked(userStrings[i])) == keccak256(abi.encodePacked(_tier))) {
+                hasValue = true;
             }
         }
-        return has;
+        return hasValue;
     }
 
-    function getAllMintedSBTs(address _address) public view returns (int _tiersOwned) {
+    function getAllMintedSBTs(address _address) public view returns (string[] memory _tiersOwned){
         // return mintedRegistryForWallets[_address];
-        return numMinted[_address];
+        string[] storage storedArray = mintedRegistryForWallets[_address];
+        string[] memory tiersOwned = new string[](storedArray.length);
+
+        for (uint256 i = 0; i < storedArray.length; i++) {
+            tiersOwned[i] = storedArray[i];
+        }
+
+    return tiersOwned;
     }
-    function setMintedSBT(address _address, int _tier) public {
-        mintedRegistryForWallets[_address].push(_tier);
-        numMinted[_address]++;
+    function setMintedSBT(address _address, string memory tier) external {
+        if(!hasMintedSBT(_address, tier)){
+            mintedRegistryForWallets[_address].push(tier);
+        }
+        
     }
+    
 }
