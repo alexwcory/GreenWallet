@@ -22,6 +22,7 @@ contract MintingHandler is Ownable {
     event setToneAddr(address _address);
     event setTTwoAddr(address _address);
     event setTThreeAddr(address _address);
+    event minted(address _address);
 
     
     function setTOneAddress(address _address) external{
@@ -49,5 +50,6 @@ contract MintingHandler is Ownable {
         } else if(keccak256(bytes(_tier)) == keccak256(bytes("TierThree"))) {
             return TThree.mint(_address);
         }
+        emit minted(_address);
     }
 }

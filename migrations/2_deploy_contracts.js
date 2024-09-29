@@ -100,29 +100,32 @@ module.exports = async function(deployer, network, accounts) {
   let tierOne, tierTwo, tierThree;
   try {
     // Deploy TierOne
-    await deployer.deploy(TierOne, "TierOneBaseURI");
+    await deployer.deploy(TierOne, "http://localhost:3000/sbts/sbt_metadata/tier_one_metadata.json");
     tierOne = await TierOne.deployed();
     const receiptOne = await mintingHandler.setTOneAddress(tierOne.address);
     for (let i = 0; i < receiptOne.logs.length; i++) {
       const log = receiptOne.logs[i];
       console.log(`Event ${log.event}:`, log.args);
     }
+    const toneAddr = await greenWallet.setTOneAddress(tierOne.address); 
+    console.log("Set greenwallet tone addr at:", tierOne.address);
     console.log("TierOne deployed at:", tierOne.address);
 
     // Deploy TierTwo
-    await deployer.deploy(TierTwo, "TierTwoBaseURI");
+    await deployer.deploy(TierTwo, "http://localhost:3000/sbts/sbt_metadata/tier_two_metadata.json");
     tierTwo = await TierTwo.deployed();
     const receiptTwo = await mintingHandler.setTTwoAddress(tierTwo.address);
     for (let i = 0; i < receiptTwo.logs.length; i++) {
       const log = receiptTwo.logs[i];
       console.log(`Event ${log.event}:`, log.args);
     }
+    // tierTwo.setBaseTokenURI('http://localhost:3000/sbts/sbt_metadata/tier_two_metadata.json');
     console.log("TierTwo deployed at:", tierTwo.address);
 
     // Deploy TierThree
-    await deployer.deploy(TierThree, "TierThreeBaseURI");
+    await deployer.deploy(TierThree, "http://localhost:3000/sbts/sbt_metadata/tier_one_metadata.json");
     tierThree = await TierThree.deployed();
-    const receiptThree = await mintingHandler.setTTwoAddress(tierThree.address);
+    const receiptThree = await mintingHandler.setTThreeAddress(tierThree.address);
     for (let i = 0; i < receiptThree.logs.length; i++) {
       const log = receiptThree.logs[i];
       console.log(`Event ${log.event}:`, log.args);

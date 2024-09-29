@@ -9,7 +9,9 @@ interface MManager{
     function mintSBTLogic(address _walletAddress, int _score) external;
     function getScore(address _walletAddress) external returns(int);
 }
-
+interface TierOne{
+    function getBaseTokenURI() external view returns (string memory _uri);
+}
 interface MRegister{
     function getAllMintedSBTs(address _address) external returns (string[] memory _tiersOwned);
 }
@@ -19,8 +21,11 @@ contract GreenWallet {
     string[] chains;
     MManager MMan;
     MRegister MReg;
+    TierOne TOne;
     event setMManRegInGreenWallet(address _address);
     event setMRegInGreenWallet(address _address);
+    event setTOneGreenWallet(address _address);
+    event finishedAddContract();
 
     constructor(){}
 
@@ -28,26 +33,35 @@ contract GreenWallet {
         MMan = MManager(_address);
         emit setMManRegInGreenWallet(_address);
     }
-
+    function setTOneAddress(address _address) external{
+        TOne = TierOne(_address);
+        emit setTOneGreenWallet(_address);
+    }
+    
     function setMRegAddress(address _address) external {
         MReg = MRegister(_address);
         emit setMManRegInGreenWallet(_address);
     }
-
+    function getTOneURI() public view returns (string memory uri){
+        return TOne.getBaseTokenURI();
+    }
     function getAddresses() public view returns (address[] memory _addresses) {
         return addresses;
     }
 
     function addIntoContract(address _walletAddress, string[] memory _chains, int[] memory numTransactions) 
-            public {
+            public returns (int score){
         require(!addressExists(_walletAddress), "This wallet already exists in this contract");
         require(_chains.length == numTransactions.length, "Categories and values arrays must be of equal length");
         addresses.push(_walletAddress);
         for (uint256 i = 0; i < _chains.length; i++) {
             transactions[_walletAddress][_chains[i]] = numTransactions[i];
         }
-        int score = MMan.calculateScore(_walletAddress, chains, numTransactions);
+        MMan.calculateScore(_walletAddress, chains, numTransactions);
+        int score = MMan.getScore(_walletAddress);
         MMan.mintSBTLogic(_walletAddress, score);
+        emit finishedAddContract();
+        return score;
     }
 
     function updateTransactions(address _walletAddress, string memory _chain) public {
@@ -77,7 +91,7 @@ contract GreenWallet {
         }
         return false;
     }
-    function walletOwns(address _walletAddress) public returns (string[] memory ownedTiers) {
+    function walletOwns(address _walletAddress) public view returns (string[] memory ownedTiers) {
         return MReg.getAllMintedSBTs(_walletAddress);
     }
     function addChain(string memory chain) public {

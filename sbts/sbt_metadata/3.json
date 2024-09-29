@@ -1,0 +1,15 @@
+{
+    "name": "Tier Three SBT",
+    "description": "This is the Tier Three Soulbound Token for GreenWallet.",
+    "image": "http://localhost:3000/sbts/sbt_images/tier_three_image.png",
+    "attributes": [
+      {
+        "trait_type": "Tier",
+        "value": "Three"
+      },
+      {
+        "trait_type": "Soulbound",
+        "value": "True"
+      }
+    ]
+  }

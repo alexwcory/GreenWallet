@@ -7,14 +7,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 contract TierThree is ERC721URIStorage {
-    uint256 _currentTokenId;
+    uint256 _tokenId;
     string private _baseTokenURI;
 
     event mintedTThree(address _address);
 
-    constructor(string memory baseTokenURI) ERC721("TierThree", "T3") {
+    constructor(string memory baseTokenURI) ERC721("TierThree", "T3"){
         _baseTokenURI = baseTokenURI;
-        _currentTokenId = 1;
+        _tokenId = 3;
     }
     
     function setBaseTokenURI(string memory baseTokenURI) public {
@@ -22,19 +22,15 @@ contract TierThree is ERC721URIStorage {
     }
 
     function mint(address _recipient) public returns (uint256 _sbtId){
-        _currentTokenId += 1;
-        uint256 newItemId = _currentTokenId;
-        _mint(_recipient, newItemId);
+        _mint(_recipient, _tokenId);
         emit mintedTThree(_recipient);
-        return _currentTokenId;
+        return _tokenId;
     }
 
     function checkOwnership(address wallet) public view returns (bool) {
-        for (uint256 tokenId = 1; tokenId <= _currentTokenId; tokenId++) {
-            if (ownerOf(tokenId) == wallet) {
+        if (ownerOf(_tokenId) == wallet) {
                 return true;
             }
-        }
         return false;
     }
 

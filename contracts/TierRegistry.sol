@@ -6,7 +6,6 @@ import "./libraries/StringArrayUtils.sol";
 
 interface IMintingRegistry {
     function getAddresses() external view returns (address[] memory);
-    function updateMintedRegistryForWallets(address _addr, string memory tier, int _sbtId) external;
     function deleteMintedRegistryForWallets(address _addr, string memory tier) external;
 }
 
@@ -28,9 +27,6 @@ contract TierRegistry is Ownable {
         tiers.push(_tier);
         scoreRequirements[_tier] = _tierScoreRequirement;
         tierSBTAddresses[_tier] = _tierAddress;
-        for (uint256 i = 0; i < IMint.getAddresses().length; i++) {
-            IMint.updateMintedRegistryForWallets(IMint.getAddresses()[i], _tier, 0);
-        }
     }
     
     function removeTier(string memory _tier) public onlyOwner() {
