@@ -30,13 +30,18 @@ contract("GreenWallet", (accounts) => {
       await instance.addChain("ethereum");
       await addWallet(instance, walletAddress, chain, numTransactions);
       await logStoredAddresses(instance);
-      let tiersOwned = await instance.walletOwns(walletAddress);
+      let tiersOwned = await instance.walletOwns.call(walletAddress);
+      console.log(tiersOwned);
       console.log(`Num tiers owned: ${tiersOwned.length}`);
       for(let i = 0; i < tiersOwned.length; i++){
         console.log(tiersOwned[i]);
       }
     //   assert(tiersOwned.length == 1);
       console.log("Is length of 1");
+      const uri = await instance.getTOneURI.call();
+      console.log(uri);
+      assert(uri == "http://localhost:3000/sbts/sbt_metadata/tier_one_metadata.json");
+      console.log("passed uri assert");
       assert(tiersOwned[0] == "TierOne", "Incorrect base wallet owns");
     } catch (error) {
       console.error("Error in test:", error);

@@ -15,7 +15,9 @@ import './App.css'
 
 function App() {
   const [loading, setLoading] = useState(true);
+  const [showContent, setShowContent] = useState(false);
   const [query, setQuery] = useState('');
+  const [addressVal, setAddressVal] = useState('');
 
   //web3 data
   const [web3, setWeb3] = useState(null);
@@ -27,12 +29,17 @@ function App() {
     notFound: false,
     badResponse: false,
   })
-  
+
   useEffect(() => {
-    setTimeout(()=>{
-      setLoading(false);
-    }, 500)
-  }, [])
+    // Wait for 0.5 seconds before starting fade-out
+    setTimeout(() => {
+      setLoading(false); // Start fade-out
+      // Wait another 0.5 seconds (fade-out duration) before showing the main content
+      setTimeout(() => {
+        setShowContent(true);
+      }, 1000); // Match CSS fade-out duration
+    }, 500); // Initial wait before fade-out starts
+  }, []);
 
   useEffect(() => {
     //MOCK WALLET ADDRESSES
@@ -151,8 +158,7 @@ function App() {
             }
           ],
           "stateMutability": "view",
-          "type": "function",
-          "constant": true
+          "type": "function"
         },
         {
           "inputs": [],
@@ -165,8 +171,7 @@ function App() {
             }
           ],
           "stateMutability": "view",
-          "type": "function",
-          "constant": true
+          "type": "function"
         },
         {
           "inputs": [
@@ -232,8 +237,7 @@ function App() {
             }
           ],
           "stateMutability": "view",
-          "type": "function",
-          "constant": true
+          "type": "function"
         },
         {
           "inputs": [
@@ -252,8 +256,7 @@ function App() {
             }
           ],
           "stateMutability": "view",
-          "type": "function",
-          "constant": true
+          "type": "function"
         },
         {
           "inputs": [
@@ -272,8 +275,7 @@ function App() {
             }
           ],
           "stateMutability": "view",
-          "type": "function",
-          "constant": true
+          "type": "function"
         },
         {
           "inputs": [
@@ -286,9 +288,9 @@ function App() {
           "name": "walletOwns",
           "outputs": [
             {
-              "internalType": "string[]",
-              "name": "ownedTiers",
-              "type": "string[]"
+              "internalType": "string",
+              "name": "",
+              "type": "string"
             }
           ],
           "stateMutability": "view",
@@ -319,40 +321,59 @@ function App() {
             }
           ],
           "stateMutability": "view",
-          "type": "function",
-          "constant": true
+          "type": "function"
         }
       ]
-      const contractAddress = "0xAAC2EdE5C581f4D163607046f1de06d7bB09374e"
+      const contractAddress = "0x21E66e4715712aBEBD4C382e9D3A1D270c4a0118"
       const contract = new web3Instance.eth.Contract(contractABI, contractAddress);
       setContract(contract);
+      // await contract.methods.addChain("bitcoin");
+      // await contract.methods.addChain("ethereum");
+      // const chains = await contract.methods.getChains().call();
+      // console.log(chains[0]);
 
-      accounts.forEach((account) => {
-        console.log(account);
-        if (web3Instance.utils) {
-          console.log("Web3 utils is available:", web3Instance.utils);
-        } else {
-          console.error("Web3 utils is null or undefined.");
-          return;  // Exit early if utils is not available
-        }
-        const isValid = web3Instance.utils.isAddress(account);
-        console.log("Is address valid and checksummed:", isValid);
-        const executeTransaction = async () => {
-          try {
-            await contract.methods.addIntoContract(account, ["bitcoin", "ethereum"], [2, 4]).send({ from: account });
-            console.log("Transaction successful");
-          } catch (error) {
-            console.error("Error executing transaction:", error);
-          }
-        };
-        executeTransaction();
-        const score = contract.methods.getScore(account).call().then((score) => {
-          console.log("Score:", score);
-        }).catch((error) => {
-          console.error("Error fetching score:", error);
-        });
-        console.log(score);
-      })
+      // accounts.forEach((account) => {
+      //   console.log(account);
+      //   if (web3Instance.utils) {
+      //     console.log("Web3 utils is available:", web3Instance.utils);
+      //   } else {
+      //     console.error("Web3 utils is null or undefined.");
+      //     return;  // Exit early if utils is not available
+      //   }
+      //   const isValid = web3Instance.utils.isAddress(account);
+      //   console.log("Is address valid and checksummed:", isValid);
+      //   const executeTransaction = async () => {
+      //     try {
+      //       await contract.methods.addIntoContract(account, ["bitcoin", "ethereum"], [2, 4]).send({ from: account, gas: 3000000 });
+      //       const hasAddr = await addrExistsCheck(account);
+      //       console.log("Addr in there, ", hasAddr);
+      //       await awaitAddress(account);
+      //       console.log("Transaction successful");
+      //     } catch (error) {
+      //       console.error("Error executing transaction:", error);
+      //     }
+      //   };
+
+      //   const awaitAddress = async (accountVal) => {
+      //     try {
+      //       const data = await contract.methods.walletOwns(accountVal).call();
+      //       const ownedTiers = data.split(';').filter(s => s);
+      //       console.log("Owned Tiers:", ownedTiers);
+      //     } catch (error) {
+      //       console.error("Error awaiting address:", error);
+      //     }
+      //   };
+      //   const addrExistsCheck = async (accountVal) => {
+      //     try {
+      //       const addrExists = await contract.methods.addressExists(account).call();
+      //       console.log(addrExists, "Exists");
+      //     } catch (error) {
+      //       console.error("Error waiting for added address", error);
+      //     }
+      //   };
+
+      //   executeTransaction();
+      // })
     }
     initWeb3();
   }, [])
@@ -367,12 +388,47 @@ function App() {
 
   }
 
+  const handleAddAddress = async () => {
+    if (!addressVal) {
+      alert('Please enter a wallet address.');
+      return;
+    }
+
+    try {
+      // Call the /addAddress API endpoint
+      const response = await fetch('http://localhost:3000/addAddress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address: addressVal }), // Send the wallet address as JSON
+      });
+
+      const result = await response.json(); // Parse the response
+
+      if (response.ok) {
+        alert(result.message); // Show success message
+      } else {
+        alert(result.error || 'Failed to add address'); // Show error message
+      }
+    } catch (error) {
+      console.error('Error adding address:', error);
+      alert('An error occurred while adding the address.');
+    }
+
+  };
+
+
   const handleSearchChange = (event) => {
     setQuery(event.target.value);
   }
 
+  const handleAddAddressChange = (event) => {
+    setAddressVal(event.target.value);
+  }
+
   const fetchAccountInfo = async (query) => {
-    if(!web3) return reject(new Error("Web3 not init"));
+    if (!web3) return reject(new Error("Web3 not init"));
 
     try {
       const balance = await web3.eth.getBalance(query);
@@ -383,9 +439,9 @@ function App() {
         transactionCount,
       }
       setAccountInfo(info);
-      setErrors(prev => ({...prev, badQuery: false}))
+      setErrors(prev => ({ ...prev, badQuery: false }))
     } catch (error) {
-      setErrors(prev => ({...prev, badQuery: true}))
+      setErrors(prev => ({ ...prev, badQuery: true }))
       console.error("ERROR FETCHING ACCOUNT INFO:", error);
     }
   }
@@ -393,22 +449,23 @@ function App() {
   return (
     <>
       <div id="loadingScreen" className={loading ? '' : 'hidden'}>
-            <Box component="img" src="logo1000.png" onClick={() => {window.location.href='/asdf'}} sx={{
-              height: '300px',
-              width: '300px',
-            }}>
-            </Box>
+        <Box component="img" src="logo1000.png" onClick={() => { window.location.href = '/asdf' }} sx={{
+          height: '300px',
+          width: '300px',
+        }}>
+        </Box>
       </div>
-      <div id="main">
-        <Box id="nav">
-          <Toolbar>
-            <Box component="img" src="logoonly.svg" onClick={() => {window.location.href='/asdf'}} sx={{
-              height: 75,
-              width: 75,
-            }}>
-            </Box>
-            <Typography variant="h6"  sx={{flexGrow: 1, alignItems: "flex-start"}}>
-            </Typography>
+      {showContent && (
+        <div id="main">
+          <Box id="nav">
+            <Toolbar>
+              <Box component="img" src="logoonly.svg" onClick={() => { window.location.href = '/asdf' }} sx={{
+                height: 75,
+                width: 75,
+              }}>
+              </Box>
+              <Typography variant="h6" sx={{ alignItems: "flex-start" }}>
+              </Typography>
               <IconButton
                 size="large"
                 edge="start"
@@ -417,14 +474,35 @@ function App() {
               >
                 <MenuIcon />
               </IconButton>
-            <Box>
-              <Button color="inherit">Login</Button>
-            </Box>
+              <Box>
+                <Button color="inherit">Login</Button>
+              </Box>
 
-          </Toolbar>
-        </Box>
-        <Box id="searchWrap" component="form" onSubmit={Search}>
-          <TextField
+            </Toolbar>
+          </Box>
+          {(accountInfo !== null && !errors.badQuery) &&
+            <div id="accountInfo">
+              <div id="balDisplay">
+                <h4>Remaining Balance</h4>
+                <p>{accountInfo.balance}</p>
+              </div>
+              <div id="greenDisplay">
+                <h4>Green Score</h4>
+                <p>{accountInfo.balance}</p>
+              </div>
+              <div id="tranDisplay">
+                <h4>Transactions Made</h4>
+                <p>{accountInfo.transactionCount.toString()}</p>
+              </div>
+            </div>
+          }
+          <Box id="searchWrap" component="form" onSubmit={Search}
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            {/* <TextField
             placeholder="Enter Wallet Address"
             onChange={handleSearchChange}
             id="walletAddressSearch"
@@ -454,25 +532,41 @@ function App() {
                 },
               },
             }}
-          />
-        </Box>
-        {(accountInfo !== null && !errors.badQuery) &&
-        <div id="accountInfo">
-          <div id="balDisplay">
-            <h4>Remaining Balance</h4>
-            <p>{accountInfo.balance}</p>
-          </div>
-          <div id="greenDisplay">
-            <h4>Green Score</h4>
-            <p>{accountInfo.balance}</p>
-          </div>
-          <div id="tranDisplay">
-            <h4>Transactions Made</h4>
-            <p>{accountInfo.transactionCount.toString()}</p>
-          </div>
+          /> */}
+            <TextField
+              placeholder="Add Wallet Address"
+              onChange={handleAddAddressChange}
+              id="AddAddress"
+              error={errors.badQuery}
+              helperText={errors.badQuery ? "Could not match wallet address" : ""} slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment id="searchBtn" position="start" sx={{ margin: 0, height: "100%" }}>
+                      <SearchIcon style={{ color: "f1f1f1", cursor: "pointer" }} onClick={handleAddAddress} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#f1f1f1', // Default border color
+                    borderRadius: 5,
+                    borderWidth: 2,
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#e3e3e3', // Border color on hover
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#e3e3e3', // Border color when focused
+                  },
+                },
+              }}
+            />
+          </Box>
         </div>
-        }
-      </div>
+      )}
     </>
   )
 }
