@@ -1,13 +1,21 @@
 /**
  * monitor.js
- * 
+ *
  * Handles block polling for Ethereum networks:
  * - `pollNewBlocks`: Fetches new blocks and logs transactions involving monitored addresses.
  * - `startPolling`: Initiates regular polling for new blocks on a given network.
- * 
+ *
  * Usage:
  * - Call `startPolling(networkKey, interval)` to begin monitoring.
  */
+
+
+require('dotenv').config({ path: '../.env' });
+const Web3 = require("web3"); 
+
+const greenWalletJSON = require("../build/contracts/GreenWallet.json"); 
+const contractAddress = process.env.GREEN_WALLET_ADDRESS; 
+const deployerAddress = process.env.OWNER_ADDRESS;
 
 const web3Instances = require("./web3Instances");
 const monitoredAddresses = require("./monitoredAddresses");
@@ -24,11 +32,14 @@ async function pollNewBlocks(networkKey) {
     console.error(`Web3 instance for ${networkKey} not found.`);
     return;
   }
+  const greenWalletContract = new web3.eth.Contract(
+    greenWalletJSON.abi,
+    contractAddress
+  );
 
   try {
-    // Ensure block numbers are handled as BigInt
     const currentBlockNumber = BigInt(await web3.eth.getBlockNumber());
-    const lastProcessed = BigInt(latestBlocks[networkKey] || 0n); // Default to 0 if undefined
+    const lastProcessed = BigInt(latestBlocks[networkKey] || 0n);
 
     if (currentBlockNumber > lastProcessed) {
       console.log(
@@ -37,38 +48,60 @@ async function pollNewBlocks(networkKey) {
         } to ${currentBlockNumber}`
       );
 
-      console.log(`[DEBUG] Starting block range: ${lastProcessed + 1n}`);
-      console.log(`[DEBUG] Ending block range: ${currentBlockNumber}`);
-
       for (
         let blockNumber = lastProcessed + 1n;
         blockNumber <= currentBlockNumber;
         blockNumber++
       ) {
-        console.log("Block Number: ", blockNumber);
         const block = await web3.eth.getBlock(Number(blockNumber), true); // Convert BigInt to Number for API call
 
         if (block && block.transactions) {
-          block.transactions.forEach((tx) => {
+          for (const tx of block.transactions) {
             const from = tx.from ? tx.from.toLowerCase() : null;
             const to = tx.to ? tx.to.toLowerCase() : null;
 
             if (from && monitoredAddresses.has(from)) {
               console.log(
-                `\n[${networkKey}] Address: ${from} - Transaction detected on ${networks[networkKey].name}`
+                `Transaction detected from: ${from} on ${networks[networkKey].name}`
               );
+
+              try {
+                const walletAddress = from; // Wallet address sending the transaction
+                const chain = networks[networkKey].name; // Chain name (e.g., 'ethereum')
+
+                await greenWalletContract.methods
+                  .updateTransactions(walletAddress, chain)
+                  .send({ from: deployerAddress });
+                console.log(`Transaction data updated for address: ${from}`);
+              } catch (err) {
+                console.error(
+                  "Error calling updateTransactions:",
+                  err
+                );
+              }
             }
 
             if (to && monitoredAddresses.has(to)) {
               console.log(
-                `\n[${networkKey}] Address: ${to} - Transaction detected on ${networks[networkKey].name}`
+                `Transaction detected to: ${to} on ${networks[networkKey].name}`
               );
+
+              try {
+                const walletAddress = to; // Wallet address receiving the transaction
+                const chain = networks[networkKey].name; // Chain name (e.g., 'ethereum')
+
+                await greenWalletContract.methods
+                  .updateTransactions(walletAddress, chain)
+                  .send({ from: deployerAddress });
+                console.log(`Transaction data updated for address: ${to}`);
+              } catch (err) {
+                console.error("Error calling updateTransactions for to:", err);
+              }
             }
-          });
+          }
         }
 
-        // Update the latest processed block
-        latestBlocks[networkKey] = blockNumber; // Store as BigInt
+        latestBlocks[networkKey] = blockNumber; // Update last processed block
       }
     }
   } catch (error) {

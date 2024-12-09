@@ -90,7 +90,6 @@ contract GreenWallet {
             getNumTransactions(_walletAddress)
         );
         MMan.mintSBTLogic(_walletAddress, score);
-        //transfer(from msg.sender, to myPersonalWallet, 0.0001 ETH)
     }
 
     function getScore(

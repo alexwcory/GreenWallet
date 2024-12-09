@@ -324,7 +324,7 @@ function App() {
           "type": "function"
         }
       ]
-      const contractAddress = "0x21E66e4715712aBEBD4C382e9D3A1D270c4a0118"
+      const contractAddress = import.meta.env.VITE_GREEN_WALLET_ADDRESS;
       const contract = new web3Instance.eth.Contract(contractABI, contractAddress);
       setContract(contract);
       // await contract.methods.addChain("bitcoin");

@@ -1,3 +1,6 @@
+require("dotenv").config(); // Import dotenv to load and update environment variables
+const fs = require("fs"); // Import fs to write to the .env file
+
 const GreenWallet = artifacts.require("GreenWallet");
 const MintingHandler = artifacts.require("MintingHandler");
 const MintingManager = artifacts.require("MintingManager");
@@ -7,13 +10,15 @@ const TierOne = artifacts.require("TierOne");
 const TierTwo = artifacts.require("TierTwo");
 const TierThree = artifacts.require("TierThree");
 
-module.exports = async function(deployer, network, accounts) {
+module.exports = async function (deployer, network, accounts) {
   console.log("Migration script started");
   console.log("Network:", network);
   console.log("Accounts:", accounts);
 
   const ownerAddress = accounts[0];
   console.log("Deploying GreenWallet with owner address:", ownerAddress);
+  updateEnv("OWNER_ADDRESS", ownerAddress);
+  updateEnv("REACT_APP_OWNER_ADDRESS", ownerAddress);
 
   let greenWallet;
   try {
@@ -21,6 +26,9 @@ module.exports = async function(deployer, network, accounts) {
     await deployer.deploy(GreenWallet);
     greenWallet = await GreenWallet.deployed();
     console.log("GreenWallet deployed at:", greenWallet.address);
+
+    updateEnv("GREEN_WALLET_ADDRESS", greenWallet.address);
+    updateEnv("REACT_APP_GREEN_WALLET_ADDRESS", greenWallet.address);
   } catch (error) {
     console.error("Failed to deploy GreenWallet:", error);
     return;
@@ -47,12 +55,14 @@ module.exports = async function(deployer, network, accounts) {
     // Deploy MintingRegistry
     await deployer.deploy(MintingRegistry);
     mintingRegistry = await MintingRegistry.deployed();
-    const mmReceipt = await mintingManager.setMRegAddress(mintingRegistry.address);
+    const mmReceipt = await mintingManager.setMRegAddress(
+      mintingRegistry.address
+    );
     for (let i = 0; i < mmReceipt.logs.length; i++) {
       const mmLog = mmReceipt.logs[i];
       console.log(`Event ${mmLog.event}:`, mmLog.args);
     }
-    const gwReceipt = await greenWallet.setMRegAddress(mintingRegistry.address); 
+    const gwReceipt = await greenWallet.setMRegAddress(mintingRegistry.address);
     for (let i = 0; i < gwReceipt.logs.length; i++) {
       const gwLog = gwReceipt.logs[i];
       console.log(`Event ${gwLog.event}:`, gwLog.args);
@@ -86,7 +96,9 @@ module.exports = async function(deployer, network, accounts) {
     // Deploy MintingHandler with necessary arguments
     await deployer.deploy(MintingHandler);
     mintingHandler = await MintingHandler.deployed();
-    const receipt = await mintingManager.setMHandAddress(mintingHandler.address);
+    const receipt = await mintingManager.setMHandAddress(
+      mintingHandler.address
+    );
     for (let i = 0; i < receipt.logs.length; i++) {
       const log = receipt.logs[i];
       console.log(`Event ${log.event}:`, log.args);
@@ -100,19 +112,25 @@ module.exports = async function(deployer, network, accounts) {
   let tierOne, tierTwo, tierThree;
   try {
     // Deploy TierOne
-    await deployer.deploy(TierOne, "http://localhost:3000/sbts/sbt_metadata/tier_one_metadata.json");
+    await deployer.deploy(
+      TierOne,
+      "http://localhost:3000/sbts/sbt_metadata/tier_one_metadata.json"
+    );
     tierOne = await TierOne.deployed();
     const receiptOne = await mintingHandler.setTOneAddress(tierOne.address);
     for (let i = 0; i < receiptOne.logs.length; i++) {
       const log = receiptOne.logs[i];
       console.log(`Event ${log.event}:`, log.args);
     }
-    const toneAddr = await greenWallet.setTOneAddress(tierOne.address); 
+    const toneAddr = await greenWallet.setTOneAddress(tierOne.address);
     console.log("Set greenwallet tone addr at:", tierOne.address);
     console.log("TierOne deployed at:", tierOne.address);
 
     // Deploy TierTwo
-    await deployer.deploy(TierTwo, "http://localhost:3000/sbts/sbt_metadata/tier_two_metadata.json");
+    await deployer.deploy(
+      TierTwo,
+      "http://localhost:3000/sbts/sbt_metadata/tier_two_metadata.json"
+    );
     tierTwo = await TierTwo.deployed();
     const receiptTwo = await mintingHandler.setTTwoAddress(tierTwo.address);
     for (let i = 0; i < receiptTwo.logs.length; i++) {
@@ -123,9 +141,14 @@ module.exports = async function(deployer, network, accounts) {
     console.log("TierTwo deployed at:", tierTwo.address);
 
     // Deploy TierThree
-    await deployer.deploy(TierThree, "http://localhost:3000/sbts/sbt_metadata/tier_one_metadata.json");
+    await deployer.deploy(
+      TierThree,
+      "http://localhost:3000/sbts/sbt_metadata/tier_one_metadata.json"
+    );
     tierThree = await TierThree.deployed();
-    const receiptThree = await mintingHandler.setTThreeAddress(tierThree.address);
+    const receiptThree = await mintingHandler.setTThreeAddress(
+      tierThree.address
+    );
     for (let i = 0; i < receiptThree.logs.length; i++) {
       const log = receiptThree.logs[i];
       console.log(`Event ${log.event}:`, log.args);
@@ -150,4 +173,20 @@ module.exports = async function(deployer, network, accounts) {
   }
 
   console.log("Migration script completed successfully");
+
+  function updateEnv(variableName, value) {
+    const envFilePath = "../.env";
+    let envFile = fs.readFileSync(envFilePath, "utf8");
+
+    const regex = new RegExp(`^${variableName}=.*`, "m");
+    if (regex.test(envFile)) {
+      envFile = envFile.replace(regex, `${variableName}=${value}`);
+      console.log(`Updated ${variableName} in .env`);
+    } else {
+      envFile = `${envFile.trim()}\n${variableName}=${value}`;
+      console.log(`Added ${variableName} to .env`);
+    }
+
+    fs.writeFileSync(envFilePath, envFile);
+  }
 };
